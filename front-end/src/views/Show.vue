@@ -2,34 +2,21 @@
   <div>
     <h1>Show Word</h1>
 
-    <!-- Language Display Controls -->
-    <div v-for="(display, index) in displaySettings" :key="index">
-      <label>
-        <input type="checkbox" v-model="display.checked" />
-      </label>
-      <select v-model="display.language">
-        <option value="" disabled selected style="color: grey;">Select a language to display</option>
-        <option value="english">English</option>
-        <option value="german">German</option>
-        <option value="spanish">Spanish</option>
-      </select>
-    </div>
-
-    <div v-if="isSelected('english')" class="ui labeled input fluid">
+    <div class="ui labeled input fluid">
       <div class="ui label">
         <i class="united kingdom flag"></i> English
       </div>
       <input type="text" readonly :value="word.english" />
     </div>
 
-    <div v-if="isSelected('german')" class="ui labeled input fluid">
+    <div class="ui labeled input fluid">
       <div class="ui label">
         <i class="germany flag"></i> German
       </div>
       <input type="text" readonly :value="word.german" />
     </div>
 
-    <div v-if="isSelected('spanish')" class="ui labeled input fluid">
+    <div class="ui labeled input fluid">
       <div class="ui label">
         <i class="spain flag"></i> Spanish
       </div>
@@ -42,11 +29,17 @@
       </div>
       <input type="text" readonly :value="word.class" />
     </div>
-
-    <div class="actions">
-      <router-link :to="{ name: 'edit', params: { id: this.$route.params.id } }">
-        Edit word
-      </router-link>
+    <div class="container button">
+      <div class="actions">
+        <button class="primary ui button">
+          <router-link :to="{ name: 'edit', params: { id: this.$route.params.id } }">
+            Edit
+          </router-link>
+        </button>
+      </div>
+      <button class="negative ui button" @click.prevent="onDestroy(word._id)">
+        Delete
+      </button>
     </div>
   </div>
 </template>
@@ -59,21 +52,18 @@ export default {
   data() {
     return {
       word: '',
-      displaySettings: [
-        { checked: true, language: 'english' },
-        { checked: true, language: 'german' },
-        { checked: true, language: 'spanish' }
-      ]
     };
   },
 
   methods: {
-    // Check if the language is selected in the display settings
-    isSelected(language) {
-      return this.displaySettings.some(display => display.language === language && display.checked);
+    async onDestroy(id) {
+      const sure = window.confirm('Are you sure?');
+      if (!sure) return;
+      await api.deleteWord(id);
+      this.flash('Word deleted successfully!', 'success');  // Call the API to delete the word
+      this.$router.push({ name: 'words' }); // Redirect to the words list page
     },
   },
-
   async mounted() {
     this.word = await api.getWord(this.$route.params.id);
   }
@@ -83,7 +73,19 @@ export default {
 <style scoped>
 .actions a {
   display: block;
-  text-decoration: underline;
-  margin: 20px 10px;
+  color: white;
+}
+
+.primary.ui.button {
+  width: 90px;
+  margin-right: 50px;
+}
+
+.negative.ui.button {
+  background-color: white;
+  color: #db2828;
+  border: 2px solid #db2828;
+  width: 90px;
+  margin-left: 50px;
 }
 </style>

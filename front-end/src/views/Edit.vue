@@ -20,13 +20,13 @@ export default {
         };
     },
     async mounted(){
-        this.word = await api.getWord(this.$route.params.id);
+        this.word = await api.getWord(this.$route.params.id); // Fetch the word using the ID from the route params
     },
     methods: {
         createOrUpdate: async function (word) {
-        await api.updateWord(word);
+        await api.updateWord(word); // Call the API to update the word
         this.flash('Word updated successfully!', 'success');
-        this.$router.push(`/words/${word._id}`);
+        this.$router.push(`/words/${word._id}`); // Redirect to the view word page on success
         }
     }
 };

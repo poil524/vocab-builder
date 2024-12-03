@@ -1,27 +1,36 @@
 <template>
   <div>
-    <h2>Score: {{ score }} out of {{ words.length }}</h2>
-    <form action="#" @submit.prevent="onSubmit">
-      <div v-if="selectedLanguages.includes('english')" class="ui labeled input fluid">
+    <!-- Display score -->
+    <h2>Score: {{ score }} out of {{ this.words.length }}</h2>
+
+    <!-- Form for user to enter input -->
+    <form action="#" @submit.prevent="onSubmit"> <!--Prevents default form submission and triggers onSubmit-->
+      <div class="ui labeled input fluid">
         <div class="ui label">
           <i class="united kingdom flag"></i> English
         </div>
-        <input type="text" v-model="english" :disabled="testOver" autocomplete="off" />
+        <input type="text" readonly :disabled="testOver" :value="currWord.english" />
       </div>
-      <div v-if="selectedLanguages.includes('german')" class="ui labeled input fluid">
+
+      <div class="ui labeled input fluid">
         <div class="ui label">
           <i class="germany flag"></i> German
         </div>
-        <input type="text" v-model="german" :disabled="testOver" autocomplete="off" />
+        <input type="text" placeholder="Enter word..." v-model="german" :disabled="testOver" autocomplete="off" />
       </div>
-      <div v-if="selectedLanguages.includes('spanish')" class="ui labeled input fluid">
+
+      <div class="ui labeled input fluid">
         <div class="ui label">
-          <i class="spain flag"></i> Spanish
+          <i class="spain kingdom flag"></i> Spanish
         </div>
-        <input type="text" v-model="spanish" :disabled="testOver" autocomplete="off" />
+        <input type="text" placeholder="Enter word..." v-model="spanish" :disabled="testOver" autocomplete="off" />
       </div>
-      <button class="positive ui button" :disabled="testOver">Submit</button>
+      <!-- Submit button -->
+      <div class="container button">
+        <button class="positive ui button" :disabled="testOver">Submit</button>
+      </div>
     </form>
+    <!-- Display results after test -->
     <p :class="['results', resultClass]">
       <span v-html="result"></span>
     </p>
@@ -35,46 +44,49 @@ export default {
     words: {
       type: Array,
       required: true
-    },
-    selectedLanguages: {
-      type: Array,
-      required: true
     }
   },
   data() {
     return {
-      randWords: [...this.words],
+      // Shuffle words for random order
+      randWords: [...this.words.sort(() => 0.5 - Math.random())],
       incorrectGuesses: [],
       result: '',
       resultClass: '',
-      english: '',
+      german: '',
+      spanish: '',
       score: 0,
-      testOver: false,
-      curHint: '' // The current hint language
+      testOver: false
     };
   },
   computed: {
-    currWord() {
+    currWord: function () {
+      // Return the current word, or an empty string if no words are left
       return this.randWords.length ? this.randWords[0] : '';
     }
   },
   methods: {
-    onSubmit() {
-      if (this.english === this.currWord.english) {
+    onSubmit: function () {
+      // Check if the entered inputs are correct
+      if (this.german === this.currWord.german && this.spanish === this.currWord.spanish) {
         this.flash('Correct!', 'success', { timeout: 1000 });
         this.score += 1;
       } else {
         this.flash('Wrong!', 'error', { timeout: 1000 });
         this.incorrectGuesses.push(this.currWord.german);
       }
-      this.english = '';
-      this.randWords.shift();
+
+      // Reset input fields
+      this.german = '';
+      this.spanish = '';
+      this.randWords.shift(); // Remove the current word from the list so it do not appear again
+
       if (this.randWords.length === 0) {
         this.testOver = true;
         this.displayResults();
       }
     },
-    displayResults() {
+    displayResults: function () {
       if (this.incorrectGuesses.length === 0) {
         this.result = 'You got everything correct. Well done!';
         this.resultClass = 'success';
@@ -83,16 +95,27 @@ export default {
         this.result = `<strong>You got the following words wrong:</strong> ${incorrect}`;
         this.resultClass = 'error';
       }
-    },
-    randomizeHintLanguage() {
-      // Choose a random language from the selected languages
-      const randomIndex = Math.floor(Math.random() * this.selectedLanguages.length);
-      this.hintLanguage = this.selectedLanguages[randomIndex];
-    },
-    isHintLanguage(language) {
-      // Check if the provided language is the selected hint language
-      return language === this.hintLanguage;
-    },
+    }
   }
 };
 </script>
+
+<style scoped>
+.results {
+  margin: 25px auto;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.error {
+  border: 1px solid #ebccd1;
+  color: #a94442;
+  background-color: #f2dede;
+}
+
+.success {
+  border: 1px solid #d6e9c6;
+  color: #3c763d;
+  background-color: #dff0d8;
+}
+</style>

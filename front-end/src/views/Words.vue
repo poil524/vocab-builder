@@ -1,55 +1,120 @@
 <template>
     <div>
-        <h1>Words</h1>
-        <!-- Search bar -->
-        <input type="text" id="searchWord" @keyup="searchWordFunction" placeholder="Search for word..">
-        <!-- Language Display Controls -->
-        <div v-for="(display, index) in displaySettings" :key="index">
-            <label>
-                <input type="checkbox" v-model="display.checked" />
-            </label>
-            <select v-model="display.language">
-                <option value="" disabled selected style="color: grey;">Select a language to display</option>
-                <option value="english">English</option>
-                <option value="german">German</option>
-                <option value="spanish">Spanish</option>
-            </select>
-        </div>
-
-        <table id="words" class="ui celled compact table">
-            <thead>
-                <tr>
-                    <th v-for="display in displaySettings" v-if="display.checked">
-                        {{ display.language.charAt(0).toUpperCase() + display.language.slice(1) }}
-                    </th>
-                    <th>Class</th>
-                    <th colspan="3"></th>
+        <h1>Vocabulary List</h1>
+        <div class="table-container">
+            <table id="words" class="ui celled compact table">
+                <thead>
+                    <tr>
+                        <!-- Search row -->
+                        <th id="searchRow" colspan="7">
+                            <input type="text" id="searchInput" @keyup="searchWord" placeholder=" Search for word..">
+                        </th>
+                    </tr>
+                    <!-- Table headers -->
+                    <tr>
+                        <th>English</th>
+                        <th>German</th>
+                        <th>Spanish</th>
+                        <th>Class</th>
+                        <th colspan="3"></th>
+                    </tr>
+                </thead>
+                <!-- List rendering-->
+                <tr v-for="(word, i) in words" :key="i">
+                    <td>
+                        <!-- Click on the word to access it -->
+                        <router-link :to="{ name: 'show', params: { id: word._id } }">
+                            {{ word.english }}
+                        </router-link>
+                    </td>
+                    <td>
+                        <router-link :to="{ name: 'show', params: { id: word._id } }">
+                            {{ word.german }}
+                        </router-link>
+                    </td>
+                    <td>
+                        <router-link :to="{ name: 'show', params: { id: word._id } }">
+                            {{ word.spanish }}
+                        </router-link>
+                    </td>
+                    <td id="wordClass">{{ word.class }}</td>
+                    <td width="25">
+                        <!-- Edit word-->
+                        <router-link v-if="word._id" :to="{ name: 'edit', params: { id: word._id } }">
+                            <i class="edit icon"></i>
+                        </router-link>
+                    </td>
+                    <!-- Delete word-->
+                    <td width="25" @click.prevent="onDestroy(word._id)">
+                        <a :href="`/words/${word._id}`">
+                            <i class="x icon"></i>
+                        </a>
+                    </td>
                 </tr>
-            </thead>
-            <tr v-for="(word, i) in words" :key="i">
-                <td v-for="display in displaySettings" v-if="display.checked">
-                    <!--Clikc on the word to access it-->
-                    <router-link :to="{ name: 'show', params: { id: word._id } }">
-                        {{ word[display.language] }}
-                    </router-link>
-                </td>
-                <td>{{ word.class }}</td>
-                <!-- Remove Edit and Show
-                <td width="75" class="center aligned">
-                    <router-link v-if="word._id" :to="{ name: 'edit', params: { id: word._id } }">Edit</router-link>
-                </td>
-                <td width="75" class="center aligned">
-                    <router-link v-if="word._id"
-                        :to="{ name: 'show', params: { id: word._id } }">View/Edit</router-link>
-                </td>
-                -->
-                <td width="75" class="center aligned" @click.prevent="onDestroy(word._id)">
-                    <a :href="`/words/${word._id}`">Destroy</a>
-                </td>
-            </tr>
-        </table>
+            </table>
+        </div>
     </div>
 </template>
+
+<style>
+table {
+    align-items: center;
+}
+
+.table-container {
+    max-height: 450px;
+    overflow-y: auto;
+}
+
+#words thead {
+    position: sticky;
+    top: 0;
+}
+
+#words th,
+#words td {
+    border-right: none;
+    border-left: none;
+    text-align: center;
+}
+
+#searchInput {
+    width: 80%;
+    height: 45px;
+    border-radius: 50px;
+    border: 2.5px solid;
+    padding-left: 25px;
+}
+
+#searchRow {
+    height: 90px;
+    border-bottom: none;
+}
+
+#wordClass {
+    font-style: italic;
+    color: gray !important;
+}
+
+td i.x.icon {
+    color: lightcoral;
+    font-size: 15px;
+}
+
+td i.x.icon:hover {
+    color: crimson;
+}
+
+td i.edit.icon {
+    color: lightseagreen;
+    font-size: 15px;
+}
+
+td i.edit.icon:hover {
+    color: rgb(21, 123, 118)
+}
+
+</style>
 
 <script>
 import { api } from "../helpers/helpers";
@@ -59,33 +124,31 @@ export default {
     data() {
         return {
             words: [],
-            displaySettings: [
-                { checked: true, language: 'english' },
-                { checked: true, language: 'german' },
-                { checked: true, language: 'spanish' }
-            ]
         };
     },
     methods: {
+        // Delete a word from the list
         async onDestroy(id) {
             const sure = window.confirm('Are you sure?');
             if (!sure) return;
             await api.deleteWord(id);
             this.flash('Word deleted successfully!', 'success');
-            const newWords = this.words.filter(word => word._id !== id);
-            this.words = newWords;
+            const newWords = this.words.filter(word => word._id !== id); // Remove the deleted word from the list
+            this.words = newWords;  // Update the words list
         },
-        searchWordFunction() {
-            const input = document.getElementById("searchWord");
-            const filter = input.value.toUpperCase();
+        // Search through the list
+        searchWord() {
+            const input = document.getElementById("searchInput"); 
+            const filter = input.value.toUpperCase();   // Prevent from input case sensitive
             const table = document.getElementById("words");
             const tr = table.getElementsByTagName("tr");
 
-            for (let i = 1; i < tr.length; i++) {
+            // Loop through each row to check if the word matches the search
+            for (let i = 2; i < tr.length; i++) {
                 const tdArray = tr[i].getElementsByTagName("td");
                 let found = false;
 
-                // Search only within visible columns
+                // Check each cell in the row for a match
                 for (let j = 0; j < tdArray.length - 3; j++) {
                     if (tdArray[j]) {
                         const txtValue = tdArray[j].textContent || tdArray[j].innerText;
@@ -95,12 +158,12 @@ export default {
                         }
                     }
                 }
-                tr[i].style.display = found ? "" : "none";
+                tr[i].style.display = found ? "" : "none"; // Hide row if unmatched; show row if matched
             }
         }
     },
     async mounted() {
-        this.words = await api.getWords();
+        this.words = await api.getWords();  // Fetch all words and assign to array
         console.log(this.words);
     }
 };
